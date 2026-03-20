@@ -1,6 +1,12 @@
 {
   "name": "prompt-lens",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Silently enhances prompt clarity by delegating PE evaluation to Claude via additionalContext injection",
+  "author": {
+    "name": "doit2urself"
+  },
+  "repository": "https://github.com/doit2urself/prompt-lens-plugin",
+  "license": "MIT",
+  "keywords": ["prompt-engineering", "evaluation", "clarity", "hooks"],
   "hooks": "./hooks/hooks.json"
 }

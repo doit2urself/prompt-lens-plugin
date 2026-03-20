@@ -1,0 +1,25 @@
+{
+  "name": "prompt-lens-marketplace",
+  "owner": {
+    "name": "doit2urself"
+  },
+  "metadata": {
+    "description": "PromptLens plugin marketplace",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "prompt-lens",
+      "source": "./",
+      "description": "Silently enhances prompt clarity by delegating PE evaluation to Claude via additionalContext injection",
+      "version": "1.1.0",
+      "author": {
+        "name": "doit2urself"
+      },
+      "repository": "https://github.com/doit2urself/prompt-lens-plugin",
+      "license": "MIT",
+      "keywords": ["prompt-engineering", "evaluation", "clarity", "hooks"],
+      "category": "development"
+    }
+  ]
+}

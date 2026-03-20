@@ -13,25 +13,32 @@ import sys
 
 MAX_STDIN_BYTES = 65536  # 64KB
 DEBUG = os.environ.get("PROMPTLENS_DEBUG") == "1"
+LOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "promptlens.log")
 
 
 def debug(msg: str) -> None:
-    """Print to stderr only when PROMPTLENS_DEBUG=1."""
+    """Log to file and stderr when PROMPTLENS_DEBUG=1."""
     if DEBUG:
         print(f"[PromptLens] {msg}", file=sys.stderr)
+        with open(LOG_FILE, "a") as f:
+            f.write(f"[PromptLens] {msg}\n")
 
-EVALUATION_INSTRUCTION = """\
-Before responding, briefly assess this prompt's clarity in the current conversation context:
-- Is the intent clear enough to produce the right result?
-- Are there high-impact ambiguities that could lead to wasted effort?
+INSTRUCTION_FILE = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "..", "evaluation-instruction.md"
+)
 
-If clear: proceed immediately, no overhead.
-If genuinely ambiguous with high-impact unknowns: ask 1-2 focused questions before proceeding.
-Do not ask about low-impact details you can reasonably infer.
 
-PE considerations: output format specified, scope clearly bounded, sufficient context provided, \
-complex tasks broken into steps, examples included where patterns matter, \
-instructions framed positively (do X) rather than negatively (don't do Y)."""
+def _load_instruction() -> str:
+    """Load evaluation instruction from external MD file. Returns empty string on failure."""
+    try:
+        with open(INSTRUCTION_FILE, "r", encoding="utf-8") as f:
+            return f.read().strip()
+    except (OSError, IOError) as e:
+        debug(f"instruction file load failed → {e}")
+        return ""
+
+
+EVALUATION_INSTRUCTION = _load_instruction()
 
 # Skip patterns
 CONFIRMATIONS = re.compile(
@@ -53,7 +60,7 @@ FILE_PATH = re.compile(
     r"^(?:"
     r"~?/\S+"                  # Unix absolute/home: /foo, ~/bar
     r"|\./\S+"                 # Relative: ./foo
-    r"|[a-zA-Z]:\\\S+"        # Windows: C:\path
+    r"|[a-zA-Z]:\\\\\\S+"      # Windows: C:\path (escaped backslash)
     r"|\S+\.(?:py|js|ts|tsx|jsx|go|rs|java|c|cpp|h|rb|php|sh|yml|yaml|json|toml|md|txt|css|html|sql|swift|kt)"
     r")$",                     # Bare filename: main.py (must be entire string)
     re.IGNORECASE,

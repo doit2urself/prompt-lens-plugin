@@ -163,8 +163,109 @@ def test_prompt_with_coding_request_and_code():
 def test_injection_content():
     out = run("fix the login bug")
     ctx = out["hookSpecificOutput"]["additionalContext"]
-    assert "PE considerations" in ctx
-    assert "output format" in ctx
+    assert "Anti-patterns" in ctx
+    assert "HIGH-IMPACT" in ctx
+    assert "Prompt Quality Checklist" in ctx
+    assert "Correction Strategies" in ctx
+    assert "Technique Selection Guide" in ctx
+    assert "Code Prompting Best Practices" in ctx
+    assert "Quick Reference" in ctx
+
+
+# ─── Boundary tests ───
+
+
+def test_long_prompt_boundary_exact():
+    # 2000 chars: should NOT skip (boundary)
+    assert is_injected(run("a" * 2000))
+    # 2001 chars: should skip
+    assert is_skipped(run("a" * 2001))
+
+
+def test_code_detection_boundary_lines():
+    # 2 code lines (< 3 minimum): should NOT skip even at 100% ratio
+    two_lines = "import os\nimport sys"
+    assert is_injected(run(two_lines))
+    # Exactly 3 code lines at 100%: should skip
+    three_lines = "import os\nimport sys\nfrom pathlib import Path"
+    assert is_skipped(run(three_lines))
+
+
+def test_code_detection_boundary_ratio():
+    # 3 code + 2 NL = 60% (< 70%): should NOT skip
+    prompt = "import os\nimport sys\nfrom pathlib import Path\nplease review\nthis code"
+    assert is_injected(run(prompt)), "60% code ratio should inject"
+    # 3 code + 1 NL = 75% (>= 70%): should skip
+    prompt2 = "import os\nimport sys\nfrom pathlib import Path\nplease review"
+    assert is_skipped(run(prompt2)), "75% code ratio should skip"
+
+
+# ─── Error handling tests ───
+
+
+def test_malformed_json_input():
+    """Non-JSON input should fail-open (empty JSON output, exit 0)."""
+    result = subprocess.run(
+        [sys.executable, SCRIPT],
+        input=b"this is not json",
+        capture_output=True,
+        timeout=5,
+    )
+    assert result.returncode == 0
+    assert json.loads(result.stdout) == {}
+
+
+def test_empty_stdin():
+    """Empty stdin should fail-open."""
+    result = subprocess.run(
+        [sys.executable, SCRIPT],
+        input=b"",
+        capture_output=True,
+        timeout=5,
+    )
+    assert result.returncode == 0
+    assert json.loads(result.stdout) == {}
+
+
+def test_invalid_utf8():
+    """Invalid UTF-8 bytes should fail-open."""
+    bad_json = b'{"prompt": "hello \xff\xfe world"}'
+    result = subprocess.run(
+        [sys.executable, SCRIPT],
+        input=bad_json,
+        capture_output=True,
+        timeout=5,
+    )
+    assert result.returncode == 0
+    # Should either inject or skip, but never crash
+    json.loads(result.stdout)  # must be valid JSON
+
+
+# ─── Windows path test ───
+
+
+def test_windows_path():
+    assert is_skipped(run("C:\\Users\\foo\\main.py"))
+
+
+# ─── Output structure tests ───
+
+
+def test_skip_output_is_empty_json():
+    """Skip output must be exactly {}."""
+    out = run("")
+    assert out == {}
+    assert isinstance(out, dict)
+
+
+def test_inject_output_structure():
+    """Injected output must have correct nested structure."""
+    out = run("fix the login bug")
+    assert "hookSpecificOutput" in out
+    hook = out["hookSpecificOutput"]
+    assert hook["hookEventName"] == "UserPromptSubmit"
+    assert isinstance(hook["additionalContext"], str)
+    assert len(hook["additionalContext"]) > 0
 
 
 if __name__ == "__main__":

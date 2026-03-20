@@ -1,2 +1,2 @@
 # prompt-lens-plugin
-Claude Code plugin that silently Description enhances prompt clarity by delegating PE evaluation via additionalContext injection
+Claude Code plugin that silently enhances prompt clarity by delegating PE evaluation via additionalContext injection
