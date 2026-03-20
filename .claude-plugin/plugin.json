@@ -7,6 +7,5 @@
   },
   "repository": "https://github.com/doit2urself/prompt-lens-plugin",
   "license": "MIT",
-  "keywords": ["prompt-engineering", "evaluation", "clarity", "hooks"],
-  "hooks": "./hooks/hooks.json"
+  "keywords": ["prompt-engineering", "evaluation", "clarity", "hooks"]
 }
