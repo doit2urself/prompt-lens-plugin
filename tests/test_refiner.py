@@ -282,6 +282,11 @@ def test_windows_path():
     assert is_skipped(run("C:\\Users\\foo\\main.py"))
 
 
+def test_windows_path_no_extension():
+    """Windows paths without file extension should also be skipped."""
+    assert is_skipped(run("C:\\Users\\foo\\bar"))
+
+
 # ─── Confirmation edge case tests ───
 
 

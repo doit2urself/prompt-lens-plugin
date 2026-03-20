@@ -60,7 +60,7 @@ FILE_PATH = re.compile(
     r"^(?:"
     r"~?/\S+"                  # Unix absolute/home: /foo, ~/bar
     r"|\./\S+"                 # Relative: ./foo
-    r"|[a-zA-Z]:\\\\\\S+"      # Windows: C:\path (escaped backslash)
+    r"|[a-zA-Z]:\\\S+"         # Windows: C:\path
     r"|\S+\.(?:py|js|ts|tsx|jsx|go|rs|java|c|cpp|h|rb|php|sh|yml|yaml|json|toml|md|txt|css|html|sql|swift|kt)"
     r")$",                     # Bare filename: main.py (must be entire string)
     re.IGNORECASE,
