@@ -1,0 +1,6 @@
+{
+  "name": "prompt-lens",
+  "version": "1.0.0",
+  "description": "Silently enhances prompt clarity by delegating PE evaluation to Claude via additionalContext injection",
+  "hooks": "./hooks/hooks.json"
+}
