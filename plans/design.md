@@ -13,7 +13,7 @@ Claude Code 플러그인. 사용자의 프롬프트를 **Claude 자체에 위임
 
 ### ADR-2: pe-principles.json 삭제
 - **결정**: 별도 규칙 파일 없이 평가 지침을 스크립트에 내장
-- **근거**: Claude-delegated 모델에서는 세부 규칙이 아닌 평가 관점 힌트만 필요. 14개 PE 원칙 중 6개를 선별하여 ~150토큰 지침으로 압축. Claude의 내재 지식이 나머지를 커버.
+- **근거**: Claude-delegated 모델에서는 세부 규칙이 아닌 평가 관점 힌트만 필요. 14개 PE 원칙 중 6개를 선별하여 ~400토큰 지침으로 압축. Claude의 내재 지식이 나머지를 커버.
 
 ### ADR-3: additionalContext 경로 선택
 - **결정**: SessionStart 1회 주입이 아닌 UserPromptSubmit 매 프롬프트 주입
@@ -89,7 +89,7 @@ Then: additionalContext 미주입, 원본 그대로 전달
 - 보정 엔진: **Claude-delegated** (훅은 경량 래퍼, Claude가 판단)
 - 사용자 경험: **완전 투명** (SessionStart 알림만 표시, 이후 무음)
 - 바이패스: `*` 접두사로 스킵 가능
-- 토큰 오버헤드: 프롬프트당 ~150토큰 (평가 지침)
+- 토큰 오버헤드: 프롬프트당 ~400토큰 (평가 지침)
 - 디버그: `PROMPTLENS_DEBUG=1` 환경변수로 stderr 로깅 활성화
 
 ## 핵심 기술 제약
@@ -156,7 +156,7 @@ prompt-lens-plugin/
 - **절대 비율**: 3줄 이상 + **상대 비율**: 전체 줄의 70% 이상이 코드여야 스킵
 - 자연어 요청 + 코드 첨부("이 에러 해결해줘:\nTraceback...") → 코드 비율 < 70% → 통과
 
-### 평가 지침 (additionalContext에 주입, ~150토큰)
+### 평가 지침 (additionalContext에 주입, ~400토큰)
 ```
 Before responding, briefly assess this prompt's clarity in the current conversation context:
 - Is the intent clear enough to produce the right result?

@@ -53,6 +53,16 @@ def test_hash_memo():
     assert is_skipped(run("# remember this"))
 
 
+def test_hash_markdown_heading_not_skipped():
+    """Multi-line markdown-style prompts should NOT be skipped."""
+    assert is_injected(run("# Refactor this module\nPlease restructure the auth logic"))
+
+
+def test_hash_long_request_not_skipped():
+    """Long single-line hash prompts (>=80 chars) should NOT be skipped."""
+    assert is_injected(run("# " + "a" * 80))
+
+
 def test_confirmations_en():
     for word in ["y", "n", "yes", "no", "ok", "sure", "yep", "nope", "continue",
                  "go ahead", "do it", "proceed", "keep going"]:
@@ -163,13 +173,10 @@ def test_prompt_with_coding_request_and_code():
 def test_injection_content():
     out = run("fix the login bug")
     ctx = out["hookSpecificOutput"]["additionalContext"]
-    assert "Anti-patterns" in ctx
     assert "HIGH-IMPACT" in ctx
-    assert "Prompt Quality Checklist" in ctx
-    assert "Correction Strategies" in ctx
-    assert "Technique Selection Guide" in ctx
-    assert "Code Prompting Best Practices" in ctx
-    assert "Quick Reference" in ctx
+    assert "Coding Prompt Clarity Check" in ctx
+    assert "What to change" in ctx
+    assert "Common Coding Prompt Gaps" in ctx
 
 
 # ─── Boundary tests ───
@@ -241,11 +248,83 @@ def test_invalid_utf8():
     json.loads(result.stdout)  # must be valid JSON
 
 
-# ─── Windows path test ───
+# ─── Bypass-skip interaction tests ───
+
+
+def test_bypass_with_leading_spaces():
+    """Bypass prefix with leading whitespace should still bypass."""
+    assert is_skipped(run("  * something"))
+
+
+def test_bypass_overrides_skip_conditions():
+    """Bypass prefix takes precedence over skip conditions (both produce {})."""
+    assert is_skipped(run("* /help"))
+    assert is_skipped(run("* y"))
+    assert is_skipped(run("* 1"))
+
+
+# ─── FILE_PATH edge case tests ───
+
+
+def test_file_path_with_natural_language():
+    """File path embedded in a sentence should NOT be skipped."""
+    assert is_injected(run("main.py 파일을 수정해줘"))
+    assert is_injected(run("fix bug in src/utils.ts please"))
+
+
+def test_extensionless_file_not_skipped():
+    """Files without recognized extensions should NOT be skipped."""
+    assert is_injected(run("Makefile"))
+    assert is_injected(run("Dockerfile"))
 
 
 def test_windows_path():
     assert is_skipped(run("C:\\Users\\foo\\main.py"))
+
+
+# ─── Confirmation edge case tests ───
+
+
+def test_multiword_confirmation_variants():
+    """Multi-word confirmations with varying whitespace."""
+    assert is_skipped(run("go ahead"))
+    assert is_skipped(run("do it"))
+    assert is_skipped(run("go for it"))
+
+
+# ─── Debug mode tests ───
+
+
+def test_debug_mode_stderr():
+    """PROMPTLENS_DEBUG=1 should produce stderr output."""
+    import os
+    env = os.environ.copy()
+    env["PROMPTLENS_DEBUG"] = "1"
+    result = subprocess.run(
+        [sys.executable, SCRIPT],
+        input=json.dumps({"prompt": "test debug mode"}).encode(),
+        capture_output=True,
+        timeout=5,
+        env=env,
+    )
+    assert result.returncode == 0
+    assert b"[PromptLens]" in result.stderr
+
+
+def test_debug_mode_skip_logging():
+    """Debug mode should log skip decisions to stderr."""
+    import os
+    env = os.environ.copy()
+    env["PROMPTLENS_DEBUG"] = "1"
+    result = subprocess.run(
+        [sys.executable, SCRIPT],
+        input=json.dumps({"prompt": "/help"}).encode(),
+        capture_output=True,
+        timeout=5,
+        env=env,
+    )
+    assert result.returncode == 0
+    assert b"skip" in result.stderr
 
 
 # ─── Output structure tests ───

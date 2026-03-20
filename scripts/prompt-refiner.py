@@ -102,8 +102,8 @@ def should_skip(prompt: str) -> bool:
     if stripped.startswith("/"):
         return True
 
-    # 3. Hash memo
-    if stripped.startswith("#"):
+    # 3. Hash memo (single-line short note only; multi-line or long = real request)
+    if stripped.startswith("#") and "\n" not in stripped and len(stripped) < 80:
         return True
 
     # 4. Short confirmation
